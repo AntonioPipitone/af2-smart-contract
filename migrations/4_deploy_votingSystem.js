@@ -1,5 +1,6 @@
-const VotingSystem = artifacts.require("designVoting1");
+const User = artifacts.require("User");
+const VotingSystem = artifacts.require("VotingSystem");
 
 module.exports = function (deployer) {
-  deployer.deploy(VotingSystem);
+  deployer.deploy(VotingSystem, User.address);
 };
