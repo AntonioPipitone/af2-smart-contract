@@ -3,12 +3,12 @@ var Web3 = require('web3');
 var fs = require('fs');
 var path = require('path')
 //!Create the provider 
-var provider = 'HTTP://127.0.0.1:8545';
+var provider = 'HTTP://127.0.0.1:7545';
 var web3Provider = new Web3.providers.HttpProvider(provider);
 var web3 = new Web3(web3Provider);
 var utils = web3.utils
 //!Contracts
-var pathABI= "../ABIs/Scheduling.json";
+var pathABI= "../build/contracts/User.json";
 var ABIContract = JSON.parse(fs.readFileSync(path.resolve(__dirname, pathABI)));
 var ABIScheduling = ABIContract.abi;
 //*Prendi automaticamente l'ultimo address del contratto - SERVE SOLO NEI TEST
@@ -263,8 +263,8 @@ async function main(){
     }
 
     await registerUsers(false)
-    await registerPrinter(2,false)
-    await addMaterials(false)
+    //await registerPrinter(2,false)
+    //await addMaterials(false)
 
 }
 
