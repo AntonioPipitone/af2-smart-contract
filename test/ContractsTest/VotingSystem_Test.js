@@ -1,4 +1,4 @@
-import Contract_Test from "./Contract_Test"
+import Contract_Test from "./Contract_Test.js"
 import bs58 from "bs58"
 
 
@@ -98,7 +98,7 @@ export default class VotingSystem_Test extends Contract_Test {
 }
 
 
-
+/* 
 
 
 //sequentially select the sm_contract function to call and comment the other
@@ -129,4 +129,4 @@ const main = async function () {
 
 }
 
-main();
+main(); */

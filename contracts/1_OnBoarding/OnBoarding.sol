@@ -7,7 +7,7 @@ pragma experimental ABIEncoderV2;
 
 import "./Structs/OnBoardingStructs.sol";
 
-abstract contract User{
+abstract contract IUser{
     mapping (address => bool) public isPlayer;
     function isMaker(address adr) virtual public view returns(bool);
 }
@@ -27,9 +27,9 @@ contract OnBoarding {
 
     event newPrinterAddition(address player_address, bool status);
 
-    User private Iuser;
+    IUser private Iuser;
     constructor(address _user){
-        Iuser = User(_user);
+        Iuser = IUser(_user);
     }
 
 

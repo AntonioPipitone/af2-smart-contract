@@ -20,7 +20,7 @@ export default class Contract_Test{
         let ContractAddress = ContractNetworks[Object.keys(ContractNetworks)[Object.keys(ContractNetworks).length - 1]].address
         
         
-        console.log("Indirizzo Contratto ----- "+ ContractAddress)
+        console.log(`Indirizzo Contratto ${name} ----- `+ ContractAddress)
         //*Stampalo per check
         this.contract = new this.web3.eth.Contract(ABIScheduling, ContractAddress);
     }
