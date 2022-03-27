@@ -16,17 +16,19 @@ export default class User_Test extends Contract_Test{
             //Registrare un Caller
             if(i==0 || i==1){
                 await this.contract.methods.addCaller(
-                    this.utils.asciiToHex("prova"),       // Username
-                    this.utils.asciiToHex("prova1"),      // Posizione PROVVISORIAMENTE IN BYTES
+                    this.utils.asciiToHex("prova1"),         // username
+                    {latitude:3,longitude:4},                // Posizione
+                    Date.now()                               //Timestamp creazione
                 ).send({from:account, gas: 6721975}) //Non inserire i gas nel frontend(Se ne occupa metamask). - Sì nel mobile
                 continue
             }
             //Registrare un Maker
             await this.contract.methods.addMaker(
-                this.utils.asciiToHex("prova"),          // Username 
-                this.utils.asciiToHex("prova1"),         // Posizione PROVVISORIAMENTE IN BYTES
+                this.utils.asciiToHex("prova1"),         // username
+                {latitude:33123,longitude:432131},                                  // Posizione
                 15,                                 //Disponibilità oraria From
                 19,                                 //Disponibilità oraria TO
+                Date.now()                          //Timestamp creazione
             ).send({from:account, gas: 6721975})
             
         }

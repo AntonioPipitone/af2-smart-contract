@@ -10,13 +10,15 @@ import "./Structs/OnBoardingStructs.sol";
 abstract contract IUser{
     mapping (address => bool) public isPlayer;
     function isMaker(address adr) virtual public view returns(bool);
+    function getNMakers() virtual public view returns(uint256);
+    address[] public makerAddress;
 }
 
 contract OnBoarding {
-    //Printer
-    MaterialDetails private NONE = MaterialDetails("",MaterialType.ABS,MaterialColor.NONE,0,0,0,0);
+    // Material unused 
+    MaterialDetails private NONE = MaterialDetails("",MaterialType.NONE,MaterialColor.NONE,0,0,0,0);
 
-     //Printers
+    //Printers
     mapping (address => mapping(address => Printer)) private printers;
     mapping (address => bool) private isPrinter;
     mapping (address => address[]) private makerPrinters;
@@ -33,7 +35,8 @@ contract OnBoarding {
     }
 
 
-    //Functions Printers
+    //----------- Printers ---------------
+
     function addPrinter(
         address printerAddress,
         bytes32 name, 
@@ -44,13 +47,15 @@ contract OnBoarding {
         uint256 bedTemperature, 
         uint256 volume, 
         bool soluble,
-        bool foodSafety
+        bool foodSafety,
+        uint256 timestamp
     ) public payable{
         require( Iuser.isPlayer(msg.sender) == true, "Player not in the system.");
         require( Iuser.isMaker(msg.sender) == true, "Only Maker can add Printers.");
 
         Printer memory newPrinter = Printer(
                                             name,
+                                            printerAddress,
                                             suppertedMaterial,
                                             NONE, 
                                             nozzles, 
@@ -60,7 +65,8 @@ contract OnBoarding {
                                             volume, 
                                             soluble, 
                                             foodSafety,
-                                            true
+                                            true,
+                                            timestamp
                                             );
         printers[msg.sender][printerAddress] = (newPrinter);  
         isPrinter[msg.sender] = true;
@@ -85,13 +91,49 @@ contract OnBoarding {
     function getMakerNPrinters()
     public view
     returns(uint256 Nprinters){
-        for (uint i = 0; i < makerPrinters[msg.sender].length; i++) {
-            Nprinters++;
+        return makerPrinters[msg.sender].length;
+    }
+
+
+    //---------------- Utils -------------------
+    function getMakerNPrintersBeforeTimestamp(uint256 timestamp)
+    public view
+    returns(uint256 Nprinters){
+        for (uint i = 0; i < Iuser.getNMakers(); i++){
+            address m = Iuser.makerAddress(i);
+            for (uint j = 0; j < makerPrinters[m].length; j++) {
+                if(printers[m][makerPrinters[m][j]].timestampModify<timestamp){
+                    Nprinters++;
+                }
+            }
         }
         return Nprinters;
     }
 
-    //Functions Materials
+    function getMakerPrintersBeforeTimestamp(uint256 timestamp)
+    public view
+    returns(MakerPrinters[] memory mprinters){
+        mprinters = new MakerPrinters[](getMakerNPrintersBeforeTimestamp(timestamp));
+        uint256 pos = 0;
+        for (uint i = 0; i < Iuser.getNMakers(); i++){
+            address m = Iuser.makerAddress(i);
+            for (uint j = 0; j < makerPrinters[m].length; j++) {
+                if(printers[m][makerPrinters[m][j]].timestampModify<timestamp){
+                    mprinters[pos] = MakerPrinters(m,printers[m][makerPrinters[m][j]]);
+                    pos++;
+                }
+            }
+        }
+        return mprinters;
+    }
+    //--------------- End Utils ----------------
+
+
+     //----------- End Printers ---------------
+
+
+    //-----------Materials---------------
+
     function checkMaterial(bytes32 name) 
     internal view returns(bool){
         bool response = false;
@@ -103,14 +145,18 @@ contract OnBoarding {
         return response;
     }
 
-    function addMaterials(bytes32 name, MaterialType mType, MaterialColor mColor, uint256 quantityKG, uint256 quantityM, uint256 printTemp, uint256 bedTemp)
-    public payable{
+    function addMaterials(bytes32 name, MaterialType mType, MaterialColor mColor, uint256 quantityKG, uint256 printTemp, uint256 bedTemp, uint256 timestamp)
+    public payable
+    returns (MaterialType){
         require( Iuser.isMaker(msg.sender) == true, "Only Maker can add Material.");
         require(mColor != MaterialColor.NONE, "Color not valid");
+        require(mType != MaterialType.NONE, "Material not valid");
+
         require(checkMaterial(name) == false, "There is already a material with this name");
-        MaterialDetails memory newMaterial = MaterialDetails(name, mType,mColor, quantityKG, quantityM, printTemp, bedTemp);    
+        MaterialDetails memory newMaterial = MaterialDetails(name, mType,mColor, quantityKG, printTemp, bedTemp, timestamp);    
         materials[msg.sender][mType].push(newMaterial);
         materialsName[msg.sender].push(name);
+        return mType;
     }
 
     function getMaterials()
@@ -127,14 +173,14 @@ contract OnBoarding {
         return av_materials;
     }
 
-    function updateMaterial(bytes32 name, MaterialType mType, MaterialColor mColor, uint256 quantityKG, uint256 quantityM, uint256 printTemp, uint256 bedTemp)
+    function updateMaterial(bytes32 name, MaterialType mType, MaterialColor mColor, uint256 quantityKG, uint256 printTemp, uint256 bedTemp, uint256 timestamp)
     public payable{
         require( Iuser.isMaker(msg.sender) == true, "Only Maker can update Materials.");
         require(checkMaterial(name) == true, "No material with this name");
 
         for(uint j=0; j < materials[msg.sender][mType].length; j++){
             if (materials[msg.sender][mType][j].name==name){
-                materials[msg.sender][mType][j] = MaterialDetails(name,mType, mColor, quantityKG, quantityM, printTemp, bedTemp); 
+                materials[msg.sender][mType][j] = MaterialDetails(name,mType, mColor, quantityKG, printTemp, bedTemp, timestamp); 
             }
         }
     }
@@ -156,7 +202,7 @@ contract OnBoarding {
         }
     }
 
-    function mountMaterial(bytes32 name, MaterialType mType, address printer)
+    function mountMaterial(bytes32 name, MaterialType mType, address printer, uint256 timestamp)
     public payable{
         require(Iuser.isMaker(msg.sender) == true, "Only Maker can delete Materials.");
         require(checkMaterial(name) == true, "No material with this name");
@@ -164,8 +210,47 @@ contract OnBoarding {
         for(uint j=0; j < materials[msg.sender][mType].length; j++){
             if (materials[msg.sender][mType][j].name==name){
                 printers[msg.sender][printer].mountedMaterial = materials[msg.sender][mType][j];
+                printers[msg.sender][printer].timestampModify = timestamp;
             }
         }
     }
+
+    //---------------- Utils -------------------
+    function getMaterialsBeforeTimestamp(uint timestamp)
+    public view
+    returns (MakerMaterials[] memory mats){
+        mats = new MakerMaterials[](getNMaterialBeforeTimestamp(timestamp));
+        uint pos = 0;
+        for (uint i = 0; i < Iuser.getNMakers(); i++){
+            for (uint t = 0; t < 3; t++){
+                for(uint j=0; j < materials[Iuser.makerAddress(i)][MaterialType(t)].length; j++){
+                    if  (materials[Iuser.makerAddress(i)][MaterialType(t)][j].timestampCreation<timestamp){
+                        mats[pos]=MakerMaterials(Iuser.makerAddress(i),materials[Iuser.makerAddress(i)][MaterialType(i)][j]);
+                        pos++;
+                    }
+                }
+            }
+        }
+        return mats;
+    }
+
+    function getNMaterialBeforeTimestamp(uint timestamp)
+    public view
+    returns (uint n){
+        for (uint i = 0; i < Iuser.getNMakers(); i++){
+            for (uint t = 0; t < 3; t++){
+                for(uint j=0; j < materials[Iuser.makerAddress(i)][MaterialType(t)].length; j++){
+                    if  (materials[Iuser.makerAddress(i)][MaterialType(t)][j].timestampCreation<timestamp){
+                        n++;
+                    }
+                }
+            }
+        }
+        return n;
+    }
+
+    //--------------- End Utils ----------------
+
+    //-----------End Materials---------------
 
 }

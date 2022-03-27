@@ -10,15 +10,17 @@ pragma experimental ABIEncoderV2;
         //Structs-------------------------
         //! Air Player and Maker
         struct Position{
-            uint256 x;
-            uint256 y;
+            int256 longitude;
+            int256 latitude;
         }
+        
         struct AirPlayer{
             PlayerType playerType;
             bytes32 username;
-            bytes32 position;
+            Position position;
             uint256 reputation;
             uint256 weight;
+            uint256 timestampCreation;
         }
         struct AirMaker{
             uint avaiabilityRangeFrom;

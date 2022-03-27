@@ -38,7 +38,8 @@ export default class OnBoarding_Test extends Contract_Test{
                     100,                                //Max bed temperature
                     40,                                 //Volume L
                     false,                              //soluble
-                    true                                //food safety
+                    true,                                //food safety
+                    Date.now()                          //Timestamp creazione
                 ).send({from:account, gas: 6721975}) //Non inserire i gas nell frontend ma sì nel mobile
             }
             Nprinter+= Number(await this.contract.methods.getMakerNPrinters().call({from:account}))
@@ -85,9 +86,9 @@ export default class OnBoarding_Test extends Contract_Test{
             1,                              //Tipo di materiale | 0 - ABS , 1 - PLA, 2 - PETG
             1,                              //Colore
             5,                              //Quantità KG
-            100,                            //Quantità M
             100,                            //Printer temp
             100,                            //Printer bed
+            Date.now()                          //Timestamp creazione
         ).send({from:testAccount, gas: 6721975})
         await this.contract.methods.addMaterials(
             this.utils.asciiToHex("ciaone1"),
@@ -95,17 +96,17 @@ export default class OnBoarding_Test extends Contract_Test{
             4, 
             5, 
             100, 
-            100, 
             100,
+            Date.now()                          //Timestamp creazione
         ).send({from:testAccount, gas: 6721975})
         await this.contract.methods.addMaterials(
             this.utils.asciiToHex("ciaone2"),
             0,
             2, 
             5, 
-            10, 
             100, 
             100,
+            Date.now()                          //Timestamp creazione
         ).send({from:testAccount, gas: 6721975})
 
         let materials = await this.contract.methods.getMaterials().call({from:testAccount})
@@ -121,9 +122,9 @@ export default class OnBoarding_Test extends Contract_Test{
             0,
             2, 
             5, 
-            10, 
             99, 
             99,
+            Date.now()                          //Timestamp creazione
         ).send({from:testAccount, gas: 6721975})
 
         let updatedMaterials = await this.contract.methods.getMaterials().call({from:testAccount})
@@ -146,7 +147,7 @@ export default class OnBoarding_Test extends Contract_Test{
         console.error("Il numero di materiali è diverso?  ", materials.length!=materialsAfterDelete.length)
         console.log(".......................................") 
 
-        await this.contract.methods.mountMaterial(this.utils.asciiToHex("ciaone1"), 2, this.printers[testAccount][0]).send({from:testAccount, gas: 6721975})
+        await this.contract.methods.mountMaterial(this.utils.asciiToHex("ciaone1"), 2, this.printers[testAccount][0],Date.now()).send({from:testAccount, gas: 6721975})
         let data =await this.contract.methods.getMakerPrinters().call({from:testAccount})
         let mounted = false
         for(let d of data){

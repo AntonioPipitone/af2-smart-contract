@@ -13,7 +13,7 @@ contract User {
     address[] private playerAddresses;
     //Details Maker
     mapping (address =>AirMaker) private airMakers;
-    address[] private makerAddress;
+    address[] public makerAddress;
     //To check if a user is registered; 
     mapping (address => bool) public isPlayer;
 
@@ -25,24 +25,24 @@ contract User {
 
     //Functions--------------------------
     //Functions Players
-    function addCaller(bytes32 position, bytes32 username/*, bytes32 _hashMsg, bytes memory _signature*/)
+    function addCaller(bytes32 username, Position memory position, uint256 timestamp/*, bytes32 _hashMsg, bytes memory _signature*/)
     public payable{
         //Check for existing player
         require( isPlayer [msg.sender] == false, "Player already added to the system." );
         //checkIdentity(_hashMsg, _signature);
-        addPlayer(false, position, username, 0, 0);
+        addPlayer(false, position, username, 0, 0, timestamp);
 
     }
 
-    function addMaker(bytes32 position, bytes32 username, uint256 from, uint256 to/*, bytes32 _hashMsg, bytes memory _signature*/)
+    function addMaker(bytes32 username, Position memory position, uint256 from, uint256 to, uint256 timestamp/*, bytes32 _hashMsg, bytes memory _signature*/)
     public payable{
         //Check for existing player
         require( isPlayer [msg.sender] == false, "Player already added to the system." );
         //checkIdentity(_hashMsg, _signature);
-        addPlayer(true, position, username, from, to);
+        addPlayer(true, position, username, from, to, timestamp);
     }
 
-    function addPlayer(bool maker, bytes32 position, bytes32 username, uint256 from, uint256 to) 
+    function addPlayer(bool maker, Position memory position, bytes32 username, uint256 from, uint256 to, uint256 timestamp) 
     public payable{
         //Push Player address
         playerAddresses.push(msg.sender);
@@ -61,11 +61,14 @@ contract User {
         }
 
         airPlayers[msg.sender].username = username;
-        airPlayers[msg.sender].position = position;
+        airPlayers[msg.sender].position.latitude = position.latitude;
+        airPlayers[msg.sender].position.longitude = position.longitude;
+        airPlayers[msg.sender].timestampCreation = timestamp;
+
 
         //Default value
-        airPlayers[msg.sender].reputation = 0;  
-        airPlayers[msg.sender].weight = 0;
+        airPlayers[msg.sender].reputation = 3;  
+        airPlayers[msg.sender].weight = 1;
         
         //Event for successful registration
         emit newPlayerAddition(msg.sender);
@@ -79,6 +82,44 @@ contract User {
         return (airPlayers[msg.sender], airMakers[msg.sender]);
     }
 
+    function getPlayerInfoWithAddress(address player)
+    public view 
+    returns (AirPlayer memory airPlayer){
+        require( isPlayer [player] == true, "Player not in the system." );
+        return airPlayers[player];
+    }
+
+    //Scheduling utilities function
+    function getNMakersBeforeTimestamp(uint256 timestamp_request)
+    private view returns(uint256 n){
+        for (uint i = 0; i < makerAddress.length; i++) {
+            if(airPlayers[makerAddress[i]].timestampCreation<timestamp_request){
+                n++;
+            }
+        }
+        return n;
+    }
+
+    function getMakersInfo(uint256 timestamp_request) 
+    public view 
+    returns (address[] memory addr, AirPlayer[] memory pl, AirMaker[] memory mk){
+        uint256 nMakers = getNMakersBeforeTimestamp(timestamp_request);
+        pl = new AirPlayer[](nMakers);
+        mk = new AirMaker[](nMakers);
+        addr = new address[](nMakers);
+        for (uint i = 0; i < makerAddress.length; i++) {
+            if(airPlayers[makerAddress[i]].timestampCreation<timestamp_request){
+                addr[i] = makerAddress[i];
+                pl[i] = airPlayers[makerAddress[i]];
+                mk[i] = airMakers[makerAddress[i]];
+            }
+        }
+        return (addr,pl,mk);
+    }
+
+    //--------
+
+    
     //TEST Function
     function getPlayers() 
     public view 

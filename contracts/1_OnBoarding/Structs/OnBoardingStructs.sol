@@ -8,6 +8,7 @@ pragma experimental ABIEncoderV2;
  */
     struct Printer{
         bytes32 name;
+        address printerAddress;
 
         MaterialType[] supportedMaterial;
         MaterialDetails mountedMaterial;
@@ -22,19 +23,32 @@ pragma experimental ABIEncoderV2;
         bool soluble;
         bool foodSafety;
         bool avaiable;
+
+        uint256 timestampModify;
     }
     
+    struct MakerPrinters{
+        address maker;
+        Printer printer;
+    }
+
     //Material
     struct MaterialDetails{
         bytes32 name;
         MaterialType mType;
         MaterialColor color;
         uint256 quantityKG;
-        uint256 quantityM;//TODO Rimuovi kg o M
         uint256 printTemperature; 
         uint256 bedTemperature;
+        
+        uint256 timestampCreation;
     }
 
-    //FIXME Metti NONE come materiale
-    enum MaterialType  { ABS, PLA, PETG }
+    struct MakerMaterials{
+        address maker;
+        MaterialDetails material;
+    }
+
+
+    enum MaterialType  { ABS, PLA, PETG, NONE }
     enum MaterialColor { NONE, BLACK, WHITE, BROWN, GRAY, YELLOW, ORANGE, RED, PINK, PURPLE, BLU, GREEN }
